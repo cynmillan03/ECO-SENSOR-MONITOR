@@ -5,15 +5,9 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
 <title>Eco Sensor Monitor</title>
 <meta name="description" content="Mobile-friendly Temperature & Humidity monitor (ThingSpeak)">
-<!-- PWA manifest and theme -->
+
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#0f172a">
-<script>
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('service-worker.js')
-    .then(() => console.log('Service Worker registered'));
-}
-</script>
 
 <style>
 :root {
@@ -65,7 +59,6 @@ footer{margin-top:14px;color:var(--muted);font-size:0.82rem;text-align:center;}
   </div>
 
   <div class="grid">
-    <!-- Temperature Gauge -->
     <div class="card gauge-wrap">
       <div class="meta">Temperature</div>
       <svg class="gauge" viewBox="0 0 220 120">
@@ -88,7 +81,6 @@ footer{margin-top:14px;color:var(--muted);font-size:0.82rem;text-align:center;}
       </div>
     </div>
 
-    <!-- Humidity Gauge -->
     <div class="card gauge-wrap">
       <div class="meta">Humidity</div>
       <svg class="gauge" viewBox="0 0 220 120">
@@ -112,7 +104,6 @@ footer{margin-top:14px;color:var(--muted);font-size:0.82rem;text-align:center;}
     </div>
   </div>
 
-  <!-- QR Code Section -->
   <div id="qrCode"></div>
 
   <footer>
@@ -120,7 +111,6 @@ footer{margin-top:14px;color:var(--muted);font-size:0.82rem;text-align:center;}
   </footer>
 </div>
 
-<!-- QR Code Library -->
 <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
 <script>
 QRCode.toCanvas(document.getElementById('qrCode'), window.location.href, {width:150}, err=>{
@@ -135,7 +125,7 @@ const FIELD_TEMP = 1;
 const FIELD_HUM = 2;
 
 const startBtn = document.getElementById('startBtn');
-const stopBtn  = document.getElementById('stopBtn');
+const stopBtn  = document.getElementById('stopBtn');
 const intervalInput = document.getElementById('intervalInput');
 const tempValue = document.getElementById('tempValue');
 const humValue = document.getElementById('humValue');
@@ -156,20 +146,25 @@ async function fetchLatest() {
     const h = parseFloat(data[`field${FIELD_HUM}`]);
     const created_at = data.created_at ? new Date(data.created_at) : null;
 
+    // Update Temperature
     if(!isNaN(t)){
       tempValue.textContent = t.toFixed(1) + ' °C';
       tempTime.textContent = created_at ? created_at.toLocaleTimeString() : '—';
+      // Mapped range: -10°C to 50°C
       updateArrow(tempArrow, t, -10, 50);
     }
+    // Update Humidity
     if(!isNaN(h)){
       humValue.textContent = h.toFixed(1) + ' %';
       humTime.textContent = created_at ? created_at.toLocaleTimeString() : '—';
+      // Mapped range: 0% to 100%
       updateArrow(humArrow, h, 0, 100);
     }
   } catch(err){console.warn(err);}
 }
 
 function updateArrow(arrowEl, value, min, max){
+  // Calculates angle from -180 (min) to 0 (max) degrees
   const angle = ((value - min)/(max - min))*180 - 180;
   arrowEl.setAttribute('transform', `rotate(${angle} 110 60)`);
 }
@@ -180,11 +175,20 @@ function startPolling(){
   fetchLatest();
   timer = setInterval(fetchLatest, intervalSec*1000);
   startBtn.disabled=true;
+  stopBtn.disabled=false;
 }
-function stopPolling(){ if(timer) clearInterval(timer); timer=null; startBtn.disabled=false; }
+function stopPolling(){ 
+  if(timer) clearInterval(timer); 
+  timer=null; 
+  startBtn.disabled=false; 
+  stopBtn.disabled=true;
+}
 
 startBtn.addEventListener('click', startPolling);
 stopBtn.addEventListener('click', stopPolling);
+
+// Initial load
+startPolling(); 
 </script>
 </body>
 </html>
